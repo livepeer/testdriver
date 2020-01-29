@@ -33,6 +33,7 @@ func main() {
 	statsInterval := time.Duration(*statsIntervalSec) * time.Second
 
 	minSuccessRate := flag.Float64("min-success-rate", 99.0, "minimum success rate required to continue testing an increased number of streams")
+	numProfiles := flag.Uint("profiles", 1, "number of profiles to test")
 	numStreamsInit := flag.Uint("streams-init", 1, "number of streams to begin tests with")
 	numStreamsStep := flag.Uint("streams-step", 1, "number of streams to increase by on each successive test")
 
@@ -62,8 +63,8 @@ func main() {
 		*numStreamsInit,
 		*numStreamsStep,
 		func(s string, r *concurrence.Result) {
-			messenger.SendMessage(fmt.Sprintf("%s rtmp host: %s:%d / media host: %s:%d using streamtester host: %s:%d - now testing %d concurrent streams",
-				s, *rtmpHost, *rtmpPort, *mediaHost, *mediaPort, *streamTesterHost, *streamTesterPort, r.NumStreams))
+			messenger.SendMessage(fmt.Sprintf("%s rtmp host: %s:%d / media host: %s:%d using streamtester host: %s:%d - now testing %d concurrent streams with %d profiles",
+				s, *rtmpHost, *rtmpPort, *mediaHost, *mediaPort, *streamTesterHost, *streamTesterPort, r.NumStreams, r.NumProfiles))
 		},
 	)
 
@@ -114,7 +115,7 @@ func main() {
 
 	ctx := context.Background()
 
-	res, err := testDriver.Run(ctx)
+	res, err := testDriver.Run(ctx, *numProfiles)
 	if err != nil {
 		messenger.SendFatalMessage(fmt.Sprintf("FAILED: %v", err))
 		log.Fatalf("FAILED: %v", err)

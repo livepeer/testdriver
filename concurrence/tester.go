@@ -59,7 +59,7 @@ func (t *Tester) IsRunning() bool { return t.baseManifestID != "" && !t.done }
 // GetManifestID returns the manifest ID of the stream in progress
 func (t *Tester) GetManifestID() string { return t.baseManifestID }
 
-func (t *Tester) start(NumStreams uint) (*model.StartStreamsRes, error) {
+func (t *Tester) start(numStreams, numProfiles uint) (*model.StartStreamsRes, error) {
 	response := &model.StartStreamsRes{}
 
 	url := fmt.Sprintf("http://%s:%d/start_streams", t.host, t.port)
@@ -72,8 +72,8 @@ func (t *Tester) start(NumStreams uint) (*model.StartStreamsRes, error) {
 		RTMP:           t.rtmpPort,
 		Media:          t.mediaPort,
 		Repeat:         1,
-		Simultaneous:   NumStreams,
-		ProfilesNum:    2,
+		Simultaneous:   numStreams,
+		ProfilesNum:    int(numProfiles),
 		MeasureLatency: false,
 		HTTPIngest:     false,
 	}
@@ -149,12 +149,13 @@ func (t *Tester) stats() (*model.Stats, error) {
 
 // Result contains the results of the Run() function
 type Result struct {
-	NumStreams uint
-	Stats      *model.Stats
+	NumStreams,
+	NumProfiles uint
+	Stats *model.Stats
 }
 
 // Run executes the stream concurrency benchmark and returns the Result
-func (t *Tester) Run(ctx context.Context) (*Result, error) {
+func (t *Tester) Run(ctx context.Context, NumProfiles uint) (*Result, error) {
 	NumStreams := t.numStreamsInit
 	t.done = false
 
@@ -172,7 +173,7 @@ func (t *Tester) Run(ctx context.Context) (*Result, error) {
 		NumStreams = NumStreams + t.numStreamsStep
 		started = true
 
-		t.alert("begin iteration: ", &Result{NumStreams, stats})
+		t.alert("begin iteration: ", &Result{NumStreams, NumProfiles, stats})
 
 		select {
 		case <-ctx.Done():
@@ -180,7 +181,7 @@ func (t *Tester) Run(ctx context.Context) (*Result, error) {
 		default:
 		}
 
-		startStreamResponse, err := t.start(NumStreams)
+		startStreamResponse, err := t.start(NumStreams, NumProfiles)
 		if err != nil {
 			return &Result{}, fmt.Errorf("start stream failed: %v", err)
 		}
@@ -210,6 +211,6 @@ func (t *Tester) Run(ctx context.Context) (*Result, error) {
 		log.Printf("%d streams: %v", NumStreams, stats)
 	}
 	t.done = true
-	log.Printf("success degrades at %d streams: %v", NumStreams, stats.SuccessRate)
-	return &Result{NumStreams, stats}, nil
+	log.Printf("success degrades at %d streams with %d profiles: %v", NumStreams, NumProfiles, stats.SuccessRate)
+	return &Result{NumStreams, NumProfiles, stats}, nil
 }

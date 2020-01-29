@@ -33,7 +33,7 @@ func main() {
 	statsInterval := time.Duration(*statsIntervalSec) * time.Second
 
 	minSuccessRate := flag.Float64("min-success-rate", 99.0, "minimum success rate required to continue testing an increased number of streams")
-	numProfiles := flag.Uint("profiles", 1, "number of profiles to test")
+	numProfiles := flag.Uint("profiles", 2, "number of profiles to test")
 	numStreamsInit := flag.Uint("streams-init", 1, "number of streams to begin tests with")
 	numStreamsStep := flag.Uint("streams-step", 1, "number of streams to increase by on each successive test")
 

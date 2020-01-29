@@ -44,6 +44,8 @@ func main() {
 
 	flag.Parse()
 
+	messenger.Init(*discordURL, *discordUserName, *discordUsersToNotify)
+
 	httpClient := &http.Client{
 		Timeout: 3 * time.Second,
 	}
@@ -59,6 +61,10 @@ func main() {
 		*minSuccessRate,
 		*numStreamsInit,
 		*numStreamsStep,
+		func(s string, r *concurrence.Result) {
+			messenger.SendMessage(fmt.Sprintf("%s rtmp host: %s:%d / media host: %s:%d using streamtester host: %s:%d - now testing %d concurrent streams",
+				s, *rtmpHost, *rtmpPort, *mediaHost, *mediaPort, *streamTesterHost, *streamTesterPort, r.NumStreams))
+		},
 	)
 
 	resultString := func(res *concurrence.Result) string {
@@ -66,8 +72,6 @@ func main() {
 			"concurrency test results for rtmp host: %s:%d / media host: %s:%d using streamtester host: %s:%d - success rate degrades at %d streams: %v",
 			*rtmpHost, *rtmpPort, *mediaHost, *mediaPort, *streamTesterHost, *streamTesterPort, res.NumStreams, res.Stats)
 	}
-
-	messenger.Init(*discordURL, *discordUserName, *discordUsersToNotify)
 
 	// channel for catching benchmark results to be served on endpoint
 	ch := make(chan *concurrence.Result)

@@ -30,10 +30,12 @@ type Tester struct {
 
 	baseManifestID string
 	done           bool
+
+	alert func(s string, r *Result)
 }
 
 // NewTester creates a new Tester
-func NewTester(httpClient *http.Client, host, rtmpHost, mediaHost string, port, rtmpPort, mediaPort uint, checkInterval time.Duration, minSuccessRate float64, numStreamsInit, numStreamsStep uint) *Tester {
+func NewTester(httpClient *http.Client, host, rtmpHost, mediaHost string, port, rtmpPort, mediaPort uint, checkInterval time.Duration, minSuccessRate float64, numStreamsInit, numStreamsStep uint, alert func(string, *Result)) *Tester {
 	t := &Tester{
 		httpClient:     httpClient,
 		host:           host,
@@ -46,6 +48,7 @@ func NewTester(httpClient *http.Client, host, rtmpHost, mediaHost string, port, 
 		minSuccessRate: minSuccessRate,
 		numStreamsInit: numStreamsInit,
 		numStreamsStep: numStreamsStep,
+		alert:          alert,
 	}
 	return t
 }
@@ -168,6 +171,8 @@ func (t *Tester) Run(ctx context.Context) (*Result, error) {
 
 		NumStreams = NumStreams + t.numStreamsStep
 		started = true
+
+		t.alert("begin iteration: ", &Result{NumStreams, stats})
 
 		select {
 		case <-ctx.Done():
